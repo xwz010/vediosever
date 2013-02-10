@@ -4,14 +4,11 @@
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget),
-    buffersize(0)
+    buffersize(0),
+    tick(0)
 {
     ui->setupUi(this);
 
-    //rgbBuf = new char(imageLen);
-    //yuv420sp = new char(dataLen);
-    //memset(yuv420sp,0,dataLen);
-    //memset(rgbBuf,0,imageLen);
     tcpServer = new QTcpServer(this);
     if(!tcpServer->listen(QHostAddress::Any,52000))
     {
@@ -30,26 +27,34 @@ void Widget::newConnection()
     qDebug()<<"\nclient connect.";
     m_tcpSocket = tcpServer->nextPendingConnection(); //得到每个连进来的socket
     connect(m_tcpSocket,SIGNAL(readyRead()),this,SLOT(readMessage())); //有可读的信息，触发读函数槽
+    socketin.setDevice(m_tcpSocket);
 }
 
 void Widget::readMessage()
 {
-
     qDebug()<<"get message from client.";
     QByteArray qba = m_tcpSocket->readAll();
-    QBytebuffer.append(qba);
+    bytebuffer.append(qba);
     buffersize += qba.size();
     qDebug()<<buffersize;
 
     if(buffersize >= 57600)
     {
-        qDebug()<<"buffer read ok.";
-        char rgbBuf[imageLen];
+        //qDebug()<<"buffer read ok.";
         memset(rgbBuf,0,imageLen);
-        decodeYUV420SP(rgbBuf,QBytebuffer.data(),pwidth,pheight);
-        qDebug()<<"decode ok.";
+        decodeYUV420SP(rgbBuf,bytebuffer.data(),pwidth,pheight);
+        //qDebug()<<"decode ok.";
+
         QImage image = QImage((uchar*)rgbBuf,pwidth,pheight,QImage::Format_RGB888);
         ui->label->setPixmap(QPixmap::fromImage(image));
+        ui->label->update();
+
+        qDebug()<<"display tick:"<<tick;
+        tick ++;
+
+        bytebuffer.resize(0);
+        buffersize = 0;
+        socketin<<(quint8)1;
     }
 }
 
@@ -73,10 +78,8 @@ void Widget::decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height)
     int uvp = 0, u = 0, v = 0;
     int y1192 = 0, r = 0, g = 0, b = 0;
 
-    qDebug()<<"init ok.";
     for (int j = 0, yp = 0; j < height; j++)
     {
-        qDebug()<<"j:"<<j;
         uvp = frameSize + (j >> 1) * width;
         u = 0;
         v = 0;
@@ -107,8 +110,6 @@ void Widget::decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height)
 
 Widget::~Widget()
 {
-//    delete[] rgbBuf;
-//    delete[] yuv420sp;
     delete ui;
 }
 

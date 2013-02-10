@@ -30,14 +30,19 @@ private slots:
 private:
 
 
-    QImage image_24;
+
     QTcpServer *tcpServer;
     QTcpSocket *m_tcpSocket;
-    QDataStream buffer;
+
+    QImage image_24;
+
+    //QDataStream socketout;
+    char rgbBuf[imageLen];
+    QDataStream socketin;
+    QByteArray bytebuffer;
     int buffersize;
-    QByteArray QBytebuffer;
-    //char *yuv420sp;
-    //char *rgbBuf;
+    int tick;
+
     void decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height);
 
     Ui::Widget *ui;
