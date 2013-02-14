@@ -27,9 +27,10 @@ public:
 private slots:
     void newConnection();
     void readMessage();
+
+
 private:
-
-
+    Ui::Widget *ui;
 
     QTcpServer *tcpServer;
     QTcpSocket *m_tcpSocket;
@@ -37,15 +38,18 @@ private:
     QImage image_24;
 
     //QDataStream socketout;
-    char rgbBuf[imageLen];
     QDataStream socketin;
-    QByteArray bytebuffer;
+
+
+    char rgbBuf[imageLen];
+    QByteArray yuv420sp;
+
     int buffersize;
     int tick;
 
     void decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height);
 
-    Ui::Widget *ui;
+
 };
 
 #endif // WIDGET_H

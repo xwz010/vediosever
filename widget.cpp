@@ -34,15 +34,15 @@ void Widget::readMessage()
 {
     qDebug()<<"get message from client.";
     QByteArray qba = m_tcpSocket->readAll();
-    bytebuffer.append(qba);
+    yuv420sp.append(qba);
     buffersize += qba.size();
-    qDebug()<<buffersize;
+    //qDebug()<<buffersize;
 
     if(buffersize >= 57600)
     {
         //qDebug()<<"buffer read ok.";
         memset(rgbBuf,0,imageLen);
-        decodeYUV420SP(rgbBuf,bytebuffer.data(),pwidth,pheight);
+        decodeYUV420SP(rgbBuf,yuv420sp.data(),pwidth,pheight);
         //qDebug()<<"decode ok.";
 
         QImage image = QImage((uchar*)rgbBuf,pwidth,pheight,QImage::Format_RGB888);
@@ -52,12 +52,12 @@ void Widget::readMessage()
         qDebug()<<"display tick:"<<tick;
         tick ++;
 
-        bytebuffer.resize(0);
+        yuv420sp.resize(0);
         buffersize = 0;
-        socketin<<(quint8)1;
+
+        socketin<<(quint8)1;        //inform client;
     }
 }
-
 void Widget::decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height)
 {
     int frameSize = width * height;
@@ -106,6 +106,7 @@ void Widget::decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height)
             rgbBuf[yp * 3 + 2] = (b >> 10);
         }
     }
+    return;
 }
 
 Widget::~Widget()
