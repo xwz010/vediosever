@@ -8,15 +8,19 @@
 namespace Ui {
 class Widget;
 }
-// private final static int width = 480;
-// private final static int height = 320;
+
 const int tick = 0;
-const int pwidth = 240;
-const int pheight = 160;
+const int mPreviewWidth = 480;
+const int mPreviewHeight = 320;
 const int numBands = 3;
-const int dataLen = 57600;// 307200 OR 230400//57600 76800
-const int tt = 57600;// 14400;//28800//57600;
-const int imageLen = pwidth * pheight * numBands;
+
+const int imageLen = mPreviewWidth * mPreviewHeight * numBands;
+const int dataLen = imageLen / 2 ;
+
+const int port= 52000;
+
+const int borderlen = 40;
+
 class Widget : public QWidget
 {
     Q_OBJECT
@@ -36,8 +40,6 @@ private:
     QTcpSocket *m_tcpSocket;
 
     QImage image_24;
-
-    //QDataStream socketout;
     QDataStream socketin;
 
 

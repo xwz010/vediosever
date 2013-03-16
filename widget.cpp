@@ -9,13 +9,18 @@ Widget::Widget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    this->setFixedSize(mPreviewWidth + borderlen,mPreviewHeight + borderlen);
+    ui->label->setFixedSize(mPreviewWidth,mPreviewHeight);
+
     tcpServer = new QTcpServer(this);
-    if(!tcpServer->listen(QHostAddress::Any,52000))
+    bool ret = tcpServer->listen(QHostAddress::Any,port);
+
+    if(!ret)
     {
-        //监听本地主机的52000端口，如果出错就输出错误信息，并关闭
         qDebug() << "tcpServer listen failed."<< tcpServer->errorString();
         exit(0);
     }
+
     connect(tcpServer,SIGNAL(newConnection()),this,SLOT(newConnection()));
     qDebug()<<"listen to port 52000.";
 }
@@ -25,6 +30,7 @@ Widget::Widget(QWidget *parent) :
 void Widget::newConnection()
 {
     qDebug()<<"\nclient connect.";
+
     m_tcpSocket = tcpServer->nextPendingConnection(); //得到每个连进来的socket
     connect(m_tcpSocket,SIGNAL(readyRead()),this,SLOT(readMessage())); //有可读的信息，触发读函数槽
     socketin.setDevice(m_tcpSocket);
@@ -32,20 +38,19 @@ void Widget::newConnection()
 
 void Widget::readMessage()
 {
-    qDebug()<<"get message from client.";
     QByteArray qba = m_tcpSocket->readAll();
     yuv420sp.append(qba);
     buffersize += qba.size();
     //qDebug()<<buffersize;
 
-    if(buffersize >= 57600)
+    if(buffersize >= dataLen)
     {
         //qDebug()<<"buffer read ok.";
         memset(rgbBuf,0,imageLen);
-        decodeYUV420SP(rgbBuf,yuv420sp.data(),pwidth,pheight);
+        decodeYUV420SP(rgbBuf,yuv420sp.data(),mPreviewWidth,mPreviewHeight);
         //qDebug()<<"decode ok.";
 
-        QImage image = QImage((uchar*)rgbBuf,pwidth,pheight,QImage::Format_RGB888);
+        QImage image = QImage((uchar*)rgbBuf,mPreviewWidth,mPreviewHeight,QImage::Format_RGB888);
         ui->label->setPixmap(QPixmap::fromImage(image));
         ui->label->update();
 
@@ -55,7 +60,8 @@ void Widget::readMessage()
         yuv420sp.resize(0);
         buffersize = 0;
 
-        socketin<<(quint8)1;        //inform client;
+        //inform the client
+        socketin<<(quint8)1;
     }
 }
 void Widget::decodeYUV420SP(char* rgbBuf,char* yuv420sp, int width, int height)
